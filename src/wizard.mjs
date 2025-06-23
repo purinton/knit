@@ -1,6 +1,5 @@
 import { fs, path } from '@purinton/common';
 import inquirer from 'inquirer';
-import * as GitHelper from './gitHelper.mjs';
 
 /**
  * Interactive setup wizard for repository configuration.
@@ -78,7 +77,6 @@ export async function runWizard() {
         const config = buildConfig(installPath, preCommands, user, group, postCommands, notify);
         const jsonConfig = JSON.stringify(config, null, 2);
         const filePath = await saveConfigurationFile(owner, repo, jsonConfig);
-        await handleGitCommitPush(filePath, `${owner}/${repo}`);
         printRepositoryInfo(filePath);
     } catch (error) {
         console.error('An error occurred:', error.message);
@@ -140,28 +138,6 @@ async function saveConfigurationFile(owner, repo, jsonConfig) {
     const filePath = path(dirPath, `${repo}.json`);
     fs.writeFileSync(filePath, jsonConfig);
     return filePath;
-}
-
-async function handleGitCommitPush(filePath, repoFullName) {
-    console.log('\nAttempting to commit and push the configuration file to the knit repo...');
-    try {
-        await GitHelper.add({ filePath });
-    } catch (error) {
-        console.error('Error: Failed to add file to git staging area in knit repo.');
-        process.exit(1);
-    }
-    try {
-        await GitHelper.commit({ message: `Add configuration for repository ${repoFullName}` });
-    } catch (error) {
-        console.error('Error: Git commit failed in knit repo. It might be that there is nothing to commit.');
-    }
-    try {
-        await GitHelper.push();
-    } catch (error) {
-        console.error('Error: Git push failed in knit repo. Please check your git configuration and connectivity.');
-        process.exit(1);
-    }
-    console.log('Git commit and push to knit repo completed successfully.');
 }
 
 function printRepositoryInfo(filePath) {
