@@ -1,6 +1,6 @@
 # [![Purinton Dev](https://purinton.us/logos/brand.png)](https://discord.gg/QSBxQnX7PF)
 
-## @purinton/project-template [![npm version](https://img.shields.io/npm/v/@purinton/project-template.svg)](https://www.npmjs.com/package/@purinton/project-template)[![license](https://img.shields.io/github/license/purinton/project-template.svg)](LICENSE)[![build status](https://github.com/purinton/project-template/actions/workflows/nodejs.yml/badge.svg)](https://github.com/purinton/project-template/actions)
+## @purinton/knit [![npm version](https://img.shields.io/npm/v/@purinton/knit.svg)](https://www.npmjs.com/package/@purinton/knit)[![license](https://img.shields.io/github/license/purinton/knit.svg)](LICENSE)[![build status](https://github.com/purinton/knit/actions/workflows/nodejs.yml/badge.svg)](https://github.com/purinton/knit/actions)
 
 A starter template for new Node.js projects. Use this as a foundation for your next application or service.
 
@@ -29,8 +29,8 @@ A starter template for new Node.js projects. Use this as a foundation for your n
 1. **Clone this template:**
 
    ```bash
-   git clone https://github.com/purinton/project-template.git
-   cd project-template
+   git clone https://github.com/purinton/knit.git
+   cd knit
    rm -rf .git
    git init
    npm install
@@ -43,11 +43,11 @@ A starter template for new Node.js projects. Use this as a foundation for your n
 
 ## Development
 
-- Main entry: `project-template.mjs`
+- Main entry: `knit.mjs`
 - Start your app:
 
   ```bash
-  node project-template.mjs
+  node knit.mjs
   ```
 
 - Add your code in new files and import as needed.
@@ -82,7 +82,7 @@ For help, questions, or to chat with the author and community, visit:
 
 ## Links
 
-- [GitHub Repo](https://github.com/purinton/project-template)
+- [GitHub Repo](https://github.com/purinton/knit)
 - [GitHub Org](https://github.com/purinton)
 - [GitHub Personal](https://github.com/rpurinton)
 - [Discord](https://discord.gg/QSBxQnX7PF)

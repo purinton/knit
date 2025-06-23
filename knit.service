@@ -1,5 +1,5 @@
 [Unit]
-Description=project-template
+Description=knit
 After=network-online.target
 Wants=network-online.target
 StartLimitBurst=3
@@ -10,9 +10,9 @@ User=root
 Group=root
 RestartSec=5
 Restart=on-failure
-WorkingDirectory=/opt/project-template
-ExecStart=/opt/project-template/project-template.mjs
-EnvironmentFile=/opt/project-template/.env
+WorkingDirectory=/opt/knit
+ExecStart=/opt/knit/knit.mjs
+EnvironmentFile=/opt/knit/.env
 
 [Install]
 WantedBy=multi-user.target
