@@ -1,10 +1,10 @@
-import { fs, path, log as logger } from '@purinton/common';
+import { fs as defaultFs, path as defaultPath, log as logger } from '@purinton/common';
 import inquirer from 'inquirer';
 
 /**
  * Interactive setup wizard for repository configuration.
  */
-export async function runWizard({ log = logger } = {}) {
+export async function runWizard({ log = logger, getCommands: getCommandsFn = getCommands, fs = defaultFs, path = defaultPath } = {}) {
     try {
         log.info('Starting interactive setup wizard');
         const { repoName } = await inquirer.prompt([
@@ -24,7 +24,7 @@ export async function runWizard({ log = logger } = {}) {
                 validate: input => Boolean(input) || 'Install path cannot be empty.'
             }
         ]);
-        const preCommands = await getCommands('pre-deployment');
+        const preCommands = await getCommandsFn('pre-deployment');
         let postCommands = [];
         // npm install (default yes)
         const { runNpm } = await inquirer.prompt([
@@ -50,7 +50,7 @@ export async function runWizard({ log = logger } = {}) {
                 postCommands.push('npm test > .jest.result 2>&1');
             }
         }
-        postCommands = postCommands.concat(await getCommands('post-deployment'));
+        postCommands = postCommands.concat(await getCommandsFn('post-deployment'));
         const { user } = await inquirer.prompt([
             {
                 type: 'input',
@@ -77,7 +77,7 @@ export async function runWizard({ log = logger } = {}) {
         ]);
         const config = buildConfig(installPath, preCommands, user, group, postCommands, notify);
         const jsonConfig = JSON.stringify(config, null, 2);
-        const filePath = await saveConfigurationFile(owner, repo, jsonConfig);
+        const filePath = await saveConfigurationFile(owner, repo, jsonConfig, fs, path);
         printRepositoryInfo(filePath);
         log.info('Repository configuration complete');
     } catch (err) {
@@ -85,7 +85,7 @@ export async function runWizard({ log = logger } = {}) {
     }
 }
 
-async function getCommands(type) {
+export async function getCommands(type) {
     const commands = [];
     const { hasCommand } = await inquirer.prompt([
         {
@@ -131,7 +131,7 @@ function buildConfig(installPath, pre, user, group, post, notify) {
     };
 }
 
-async function saveConfigurationFile(owner, repo, jsonConfig) {
+async function saveConfigurationFile(owner, repo, jsonConfig, fs = defaultFs, path = defaultPath) {
     const dirPath = path(import.meta, '..', 'repos', owner);
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
@@ -144,4 +144,8 @@ async function saveConfigurationFile(owner, repo, jsonConfig) {
 function printRepositoryInfo(filePath) {
     console.log(`Repository configuration saved to ${filePath}`);
     console.log('\nReminder: Set the GitHub webhook!\nURL to https://knit.purinton.us\nPOST: application/json\n');
+}
+
+if (process.env.NODE_ENV !== 'test') {
+    runWizard();
 }

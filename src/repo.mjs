@@ -7,9 +7,17 @@ import * as Notifier from './notifier.mjs';
  * Creates a repository handler for update operations.
  * @param {Object} params
  * @param {Object} params.config - The repository configuration object.
+ * @param {Function} [params.sendNotification] - Optional sendNotification for testing/mocking.
  * @returns {Object} The repository handler with an update method.
  */
-function createRepo({ config, log = logger }) {
+export function createRepo({ config, log = logger, execCommandFn = execCommand, sendNotification } = {}) {
+  // Default sendNotification implementation if not injected
+  const notifyFn = sendNotification
+    ? sendNotification
+    : async ({ repo, body, logOutput, hasError, log = logger }) => {
+        if (!repo.notify) return;
+        await Notifier.send({ notifyUrl: repo.notify, post: body, logOutput, hasError, log });
+      };
   return {
     pwd: config.pwd,
     preCmds: config.pre || [],
@@ -32,7 +40,7 @@ function createRepo({ config, log = logger }) {
       }
       if (body.ref && body.ref.startsWith('refs/tags/')) {
         log.info('[Repo] Tag push detected, skipping commands and only sending notification');
-        await sendNotification({ repo: this, body, logOutput: '', hasError: false, log });
+        await notifyFn({ repo: this, body, logOutput: '', hasError: false, log });
         return true;
       }
       let logOutput = '';
@@ -50,7 +58,7 @@ function createRepo({ config, log = logger }) {
           if (hasError) break;
           log.info(`[Repo] Running pre command: ${cmd}`);
           try {
-            const result = await execCommand({ cmd });
+            const result = await execCommandFn({ cmd });
             logOutput += formatCommandOutput({ cmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
           } catch (err) {
             logOutput += formatCommandOutput({ cmd, stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
@@ -62,7 +70,7 @@ function createRepo({ config, log = logger }) {
       if (!hasError) {
         try {
           log.info('[Repo] Running git pull');
-          const result = await execCommand({ cmd: 'git pull -q' });
+          const result = await execCommandFn({ cmd: 'git pull -q' });
           logOutput += formatCommandOutput({ cmd: 'git pull -q', stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
         } catch (err) {
           logOutput += formatCommandOutput({ cmd: 'git pull -q', stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
@@ -74,7 +82,7 @@ function createRepo({ config, log = logger }) {
         try {
           const chownCmd = `chown -R ${this.user}:${this.group} ${this.pwd}`;
           log.info(`[Repo] Running chown: ${chownCmd}`);
-          const result = await execCommand({ cmd: chownCmd });
+          const result = await execCommandFn({ cmd: chownCmd });
           logOutput += formatCommandOutput({ cmd: chownCmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
         } catch (err) {
           hasError = true;
@@ -86,7 +94,7 @@ function createRepo({ config, log = logger }) {
           if (hasError) break;
           log.info(`[Repo] Running post command: ${cmd}`);
           try {
-            const result = await execCommand({ cmd });
+            const result = await execCommandFn({ cmd });
             logOutput += formatCommandOutput({ cmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
           } catch (err) {
             logOutput += formatCommandOutput({ cmd, stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
@@ -95,12 +103,13 @@ function createRepo({ config, log = logger }) {
           }
         }
       }
-      await sendNotification({ repo: this, body, logOutput, hasError, log });
+      await notifyFn({ repo: this, body, logOutput, hasError, log });
       log.info(`[Repo] Update complete for repo: ${this.pwd} Error: ${hasError}`);
       return !hasError;
     }
   };
 }
+export { sendNotification };
 
 /**
  * Validates the webhook body.

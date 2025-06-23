@@ -7,16 +7,18 @@ import * as GitHub from './gitHub.mjs';
  * @param {Object} params
  * @param {Object} params.message - The message object ({ raw, parsed }).
  * @param {Object} [params.log] - Logger instance to use.
+ * @param {Object} [params.Repo] - Optional Repo module for testing/mocking.
+ * @param {Object} [params.GitHub] - Optional GitHub module for testing/mocking.
  * @returns {Promise<boolean>} True if successful, false otherwise.
  */
-export async function consume({ message, log = logger }) {
+export async function consume({ message, log = logger, Repo: RepoMod = Repo, GitHub: GitHubMod = GitHub }) {
   // message: { raw, parsed }
   const post = message.parsed;
-  if (!GitHub.validate({ post, log })) {
+  if (!GitHubMod.validate({ post, log })) {
     log.error('[Consumer] GitHub validation failed');
     return false;
   }
-  const repo = await Repo.get({ name: post.repository.full_name, log });
+  const repo = await RepoMod.get({ name: post.repository.full_name, log });
   if (!repo) {
     log.error('[Consumer] Repo not found:', post.repository.full_name);
     return false;

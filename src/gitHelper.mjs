@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec as realExec } from 'child_process';
 import { log as logger } from '@purinton/common';
 
 /**
@@ -8,7 +8,7 @@ import { log as logger } from '@purinton/common';
  * @param {Object} [params.log] - Logger instance to use.
  * @returns {Promise<string>} The stdout from git add.
  */
-export function add({ filePath, log = logger }) {
+export function add({ filePath, log = logger, exec = realExec }) {
   return new Promise((resolve, reject) => {
     exec(`git add "${filePath}"`, (error, stdout, stderr) => {
       if (error) {
@@ -29,7 +29,7 @@ export function add({ filePath, log = logger }) {
  * @param {Object} [params.log] - Logger instance to use.
  * @returns {Promise<string>} The stdout from git commit.
  */
-export function commit({ message, log = logger }) {
+export function commit({ message, log = logger, exec = realExec }) {
   return new Promise((resolve, reject) => {
     exec(`git commit --quiet -m "${message.replace(/"/g, '\\"')}"`, (error, stdout, stderr) => {
       if (error) {
@@ -47,7 +47,7 @@ export function commit({ message, log = logger }) {
  * Pushes committed changes to the remote repository.
  * @returns {Promise<string>} The stdout from git push.
  */
-export function push() {
+export function push({ exec = realExec } = {}) {
   return new Promise((resolve, reject) => {
     exec('git push --quiet', (error, stdout, stderr) => {
       if (error) {

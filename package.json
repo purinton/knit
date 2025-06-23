@@ -2,7 +2,7 @@
     "name": "@purinton/knit",
     "type": "module",
     "version": "1.0.0",
-    "description": "A template for starting new Node.js projects.",
+    "description": "GitHub webhook handler and deployment automation tool. Listens for GitHub webhook events, validates signatures, updates repositories, runs deployment commands, and sends notifications.",
     "main": "knit.mjs",
     "scripts": {
         "start": "node knit.mjs",
@@ -14,7 +14,14 @@
     },
     "keywords": [
         "knit",
-        "nodejs"
+        "nodejs",
+        "webhook",
+        "github",
+        "deployment",
+        "automation",
+        "discord",
+        "ci",
+        "cd"
     ],
     "author": "Russell Purinton <russell@purinton.us>",
     "license": "MIT",

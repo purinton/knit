@@ -10,10 +10,13 @@ registerSignals({ log });
 async function main() {
   log.info('knit service starting...');
   const app = await createApp({ log });
-  startApp({ appInstance: app, log });
+  const server = startApp({ appInstance: app, log });
+  registerSignals({ log, shutdownHook: () => server.close() });
 }
 
-main().catch(err => {
-  log.error('Failed to start knit service:', err);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  main().catch(err => {
+    log.error('Failed to start knit service:', err);
+    process.exit(1);
+  });
+}

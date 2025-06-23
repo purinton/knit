@@ -1,5 +1,5 @@
 import { log as logger } from '@purinton/common';
-import { sendMessage } from '@purinton/discord-webhook';
+import { sendMessage as realSendMessage } from '@purinton/discord-webhook';
 
 /**
  * Sends a notification to a Discord webhook.
@@ -8,8 +8,9 @@ import { sendMessage } from '@purinton/discord-webhook';
  * @param {Object} params.post - The webhook payload.
  * @param {string} params.log - The log output.
  * @param {boolean} params.hasError - Whether an error occurred.
+ * @param {Function} [params.sendMessageFn] - Optional sendMessage function for testing/mocking.
  */
-export async function send({ notifyUrl, post, logOutput, hasError, log = logger }) {
+export async function send({ notifyUrl, post, logOutput, hasError, log = logger, sendMessageFn = realSendMessage }) {
   if (!notifyUrl) return;
   const embed = await createEmbed({ post, logOutput, hasError });
   if (hasError) {
@@ -19,7 +20,7 @@ export async function send({ notifyUrl, post, logOutput, hasError, log = logger 
     embed.title = `\u2705 ${embed.title}`;
   }
   log.info('[Notifier] Sending message to Discord webhook');
-  await sendMessage({
+  await sendMessageFn({
     url: notifyUrl,
     body: {
       embeds: [embed],

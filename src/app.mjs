@@ -39,7 +39,8 @@ export function startApp({
     log = logger,
 }) {
     if (!appInstance) throw new Error('App not created. Call createApp() first.');
-    appInstance.listen(PORT, () => {
+    const server = appInstance.listen(PORT, () => {
         log.info(`Server is listening on port ${PORT}`);
     });
+    return server;
 }

@@ -2,7 +2,7 @@
 
 ## @purinton/knit [![npm version](https://img.shields.io/npm/v/@purinton/knit.svg)](https://www.npmjs.com/package/@purinton/knit)[![license](https://img.shields.io/github/license/purinton/knit.svg)](LICENSE)[![build status](https://github.com/purinton/knit/actions/workflows/nodejs.yml/badge.svg)](https://github.com/purinton/knit/actions)
 
-A starter template for new Node.js projects. Use this as a foundation for your next application or service.
+A GitHub webhook handler and deployment automation tool. Knit listens for GitHub webhook events, validates signatures, updates local repositories, runs deployment commands, and sends notifications (e.g., to Discord). Use this as a foundation for automating deployments and notifications for your projects.
 
 ---
 
@@ -18,6 +18,11 @@ A starter template for new Node.js projects. Use this as a foundation for your n
 
 ## Features
 
+- GitHub webhook listener (Express server)
+- Signature validation for security
+- Automated repository updates and deployment commands
+- Discord webhook notifications for deployments and errors
+- Interactive CLI wizard for repository configuration
 - Pre-configured for Node.js (ESM)
 - Environment variable support via dotenv
 - Logging and signal handling via `@purinton/common`
@@ -41,6 +46,18 @@ A starter template for new Node.js projects. Use this as a foundation for your n
    - Update this `README.md` as needed
    - Change the license if required
 
+3. **Configure your repositories:**
+   - Run the interactive wizard:
+     ```bash
+     node wizard.mjs
+     ```
+   - This will guide you through setting up deployment paths, commands, and notification URLs for each repository.
+
+4. **Set up your GitHub webhook:**
+   - Point your repository’s webhook to your Knit server URL (e.g., `https://yourdomain.com/`)
+   - Use content type `application/json`
+   - Set the webhook secret to match your `.env` file’s `GITHUB_WEBHOOK_SECRET`
+
 ## Development
 
 - Main entry: `knit.mjs`
@@ -60,11 +77,11 @@ A starter template for new Node.js projects. Use this as a foundation for your n
   npm test
   ```
 
-- Add your tests in the `__tests__` folder or alongside your code.
+- Add your tests in the `tests` folder or alongside your code.
 
 ## Customization
 
-- Replace or extend the logging and signal handling as needed.
+- Extend the logging, notification, or deployment logic as needed.
 - Add dependencies and scripts to fit your project.
 - Remove or modify template files and sections.
 
