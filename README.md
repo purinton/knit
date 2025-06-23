@@ -36,8 +36,6 @@ A GitHub webhook handler and deployment automation tool. Knit listens for GitHub
    ```bash
    git clone https://github.com/purinton/knit.git
    cd knit
-   rm -rf .git
-   git init
    npm install
    ```
 
@@ -48,9 +46,11 @@ A GitHub webhook handler and deployment automation tool. Knit listens for GitHub
 
 3. **Configure your repositories:**
    - Run the interactive wizard:
+
      ```bash
-     node wizard.mjs
+     ./wizard.mjs
      ```
+
    - This will guide you through setting up deployment paths, commands, and notification URLs for each repository.
 
 4. **Set up your GitHub webhook:**
@@ -64,7 +64,7 @@ A GitHub webhook handler and deployment automation tool. Knit listens for GitHub
 - Start your app:
 
   ```bash
-  node knit.mjs
+  ./knit.mjs
   ```
 
 - Add your code in new files and import as needed.
