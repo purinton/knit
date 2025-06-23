@@ -1,0 +1,170 @@
+import { fs, path } from '@purinton/common';
+import inquirer from 'inquirer';
+import * as GitHelper from './gitHelper.mjs';
+
+/**
+ * Interactive setup wizard for repository configuration.
+ */
+export async function runWizard() {
+    try {
+        const { repoName } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'repoName',
+                message: 'Repository Name (owner/repo):',
+                validate: input => /^.+\/.+$/.test(input) || 'Invalid repository name format. Use owner/repo.'
+            }
+        ]);
+        const [owner, repo] = repoName.split('/');
+        const { installPath } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'installPath',
+                message: 'Install Path:',
+                validate: input => Boolean(input) || 'Install path cannot be empty.'
+            }
+        ]);
+        const preCommands = await getCommands('pre-deployment');
+        let postCommands = [];
+        // npm install (default yes)
+        const { runNpm } = await inquirer.prompt([
+            {
+                type: 'confirm',
+                name: 'runNpm',
+                message: 'Do you want to run npm install?',
+                default: true
+            }
+        ]);
+        if (runNpm) {
+            postCommands.push('npm install --silent');
+            // npm test (default yes)
+            const { runNpmTest } = await inquirer.prompt([
+                {
+                    type: 'confirm',
+                    name: 'runNpmTest',
+                    message: 'Do you want to run npm test?',
+                    default: true
+                }
+            ]);
+            if (runNpmTest) {
+                postCommands.push('npm test > .jest.result 2>&1');
+            }
+        }
+        postCommands = postCommands.concat(await getCommands('post-deployment'));
+        const { user } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'user',
+                message: 'User:',
+                default: 'root'
+            }
+        ]);
+        const { group } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'group',
+                message: 'Group:',
+                default: 'root'
+            }
+        ]);
+        // Remove default webhook URL
+        const { notify } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'notify',
+                message: 'Notification URL:'
+            }
+        ]);
+        const config = buildConfig(installPath, preCommands, user, group, postCommands, notify);
+        const jsonConfig = JSON.stringify(config, null, 2);
+        const filePath = await saveConfigurationFile(owner, repo, jsonConfig);
+        await handleGitCommitPush(filePath, `${owner}/${repo}`);
+        printRepositoryInfo(filePath);
+    } catch (error) {
+        console.error('An error occurred:', error.message);
+        process.exit(1);
+    }
+}
+
+async function getCommands(type) {
+    const commands = [];
+    const { hasCommand } = await inquirer.prompt([
+        {
+            type: 'confirm',
+            name: 'hasCommand',
+            message: `Do you have any ${type} commands?`,
+            default: false
+        }
+    ]);
+    if (!hasCommand) return commands;
+    let addMore = true;
+    while (addMore) {
+        const { cmd } = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'cmd',
+                message: `Enter a ${type} command:`,
+                validate: input => !!input || 'Command cannot be empty.'
+            }
+        ]);
+        commands.push(cmd);
+        const { more } = await inquirer.prompt([
+            {
+                type: 'confirm',
+                name: 'more',
+                message: `Do you have another ${type} command?`,
+                default: false
+            }
+        ]);
+        addMore = more;
+    }
+    return commands;
+}
+
+function buildConfig(installPath, pre, user, group, post, notify) {
+    return {
+        pwd: installPath,
+        pre,
+        user,
+        group,
+        post,
+        notify
+    };
+}
+
+async function saveConfigurationFile(owner, repo, jsonConfig) {
+    const dirPath = path(import.meta, '..', 'repos', owner);
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+    const filePath = path(dirPath, `${repo}.json`);
+    fs.writeFileSync(filePath, jsonConfig);
+    return filePath;
+}
+
+async function handleGitCommitPush(filePath, repoFullName) {
+    console.log('\nAttempting to commit and push the configuration file to the knit repo...');
+    try {
+        await GitHelper.add({ filePath });
+    } catch (error) {
+        console.error('Error: Failed to add file to git staging area in knit repo.');
+        process.exit(1);
+    }
+    try {
+        await GitHelper.commit({ message: `Add configuration for repository ${repoFullName}` });
+    } catch (error) {
+        console.error('Error: Git commit failed in knit repo. It might be that there is nothing to commit.');
+    }
+    try {
+        await GitHelper.push();
+    } catch (error) {
+        console.error('Error: Git push failed in knit repo. Please check your git configuration and connectivity.');
+        process.exit(1);
+    }
+    console.log('Git commit and push to knit repo completed successfully.');
+}
+
+function printRepositoryInfo(filePath) {
+    console.log(`Repository configuration saved to ${filePath}`);
+    console.log('\nReminder: Set the GitHub webhook!\nURL to https://knit.purinton.us\nPOST: application/json\n');
+}
