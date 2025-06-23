@@ -32,7 +32,7 @@ function createRepo({ config, log = logger }) {
       }
       if (body.ref && body.ref.startsWith('refs/tags/')) {
         log.info('[Repo] Tag push detected, skipping commands and only sending notification');
-        await sendNotification({ repo: this, body, log: '', hasError: false, log: log });
+        await sendNotification({ repo: this, body, logOutput: '', hasError: false, log });
         return true;
       }
       let logOutput = '';
