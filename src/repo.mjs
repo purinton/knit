@@ -1,5 +1,5 @@
 import fs from 'fs';
-import path from 'path';
+import { path, log as logger } from '@purinton/common';
 import { exec } from 'child_process';
 import * as ConfigValidator from './configValidator.mjs';
 import * as Notifier from './notifier.mjs';
@@ -10,7 +10,7 @@ import * as Notifier from './notifier.mjs';
  * @param {Object} params.config - The repository configuration object.
  * @returns {Object} The repository handler with an update method.
  */
-function createRepo({ config }) {
+function createRepo({ config, log = logger }) {
   return {
     pwd: config.pwd,
     preCmds: config.pre || [],
@@ -25,79 +25,80 @@ function createRepo({ config }) {
      * @param {Object} params.log - The log object for logging messages.
      * @returns {Promise<boolean>} True if update succeeded, false otherwise.
      */
-    async update({ body, log }) {
-      if (log) log.info(`[Repo] Starting update for repo: ${this.pwd}`);
+    async update({ body, log: injectedLog }) {
+      const logInstance = injectedLog || log;
+      if (logInstance) logInstance.info(`[Repo] Starting update for repo: ${this.pwd}`);
       if (!validatebody({ body })) {
-        if (log) log.error('[Repo] body validation failed');
+        if (logInstance) logInstance.error('[Repo] body validation failed');
         return false;
       }
       if (body.ref && body.ref.startsWith('refs/tags/')) {
-        if (log) log.info('[Repo] Tag push detected, skipping commands and only sending notification');
-        await sendNotification({ repo: this, body, log: '', hasError: false, logInstance: log });
+        if (logInstance) logInstance.info('[Repo] Tag push detected, skipping commands and only sending notification');
+        await sendNotification({ repo: this, body, log: '', hasError: false, logInstance });
         return true;
       }
       let logOutput = '';
       let hasError = false;
       try {
         process.chdir(this.pwd);
-        if (log) log.info(`[Repo] Changed directory to ${this.pwd}`);
+        if (logInstance) logInstance.info(`[Repo] Changed directory to ${this.pwd}`);
       } catch (err) {
         logOutput += `Error: Unable to change directory to: ${this.pwd}\n`;
         hasError = true;
-        if (log) log.error('[Repo] Error changing directory:', err);
+        if (logInstance) logInstance.error('[Repo] Error changing directory:', err);
       }
       if (!hasError) {
         for (const cmd of this.preCmds) {
           if (hasError) break;
-          if (log) log.info(`[Repo] Running pre command: ${cmd}`);
+          if (logInstance) logInstance.info(`[Repo] Running pre command: ${cmd}`);
           try {
             const result = await execCommand({ cmd });
             logOutput += formatCommandOutput({ cmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
           } catch (err) {
             logOutput += formatCommandOutput({ cmd, stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
             hasError = true;
-            if (log) log.error(`[Repo] Pre command failed: ${cmd}`, err);
+            if (logInstance) logInstance.error(`[Repo] Pre command failed: ${cmd}`, err);
           }
         }
       }
       if (!hasError) {
         try {
-          if (log) log.info('[Repo] Running git pull');
+          if (logInstance) logInstance.info('[Repo] Running git pull');
           const result = await execCommand({ cmd: 'git pull -q' });
           logOutput += formatCommandOutput({ cmd: 'git pull -q', stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
         } catch (err) {
           logOutput += formatCommandOutput({ cmd: 'git pull -q', stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
           hasError = true;
-          if (log) log.error('[Repo] git pull failed:', err);
+          if (logInstance) logInstance.error('[Repo] git pull failed:', err);
         }
       }
       if (!hasError) {
         try {
           const chownCmd = `chown -R ${this.user}:${this.group} ${this.pwd}`;
-          if (log) log.info(`[Repo] Running chown: ${chownCmd}`);
+          if (logInstance) logInstance.info(`[Repo] Running chown: ${chownCmd}`);
           const result = await execCommand({ cmd: chownCmd });
           logOutput += formatCommandOutput({ cmd: chownCmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
         } catch (err) {
           hasError = true;
-          if (log) log.error('[Repo] chown failed:', err);
+          if (logInstance) logInstance.error('[Repo] chown failed:', err);
         }
       }
       if (!hasError) {
         for (const cmd of this.postCmds) {
           if (hasError) break;
-          if (log) log.info(`[Repo] Running post command: ${cmd}`);
+          if (logInstance) logInstance.info(`[Repo] Running post command: ${cmd}`);
           try {
             const result = await execCommand({ cmd });
             logOutput += formatCommandOutput({ cmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
           } catch (err) {
             logOutput += formatCommandOutput({ cmd, stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
             hasError = true;
-            if (log) log.error(`[Repo] Post command failed: ${cmd}`, err);
+            if (logInstance) logInstance.error(`[Repo] Post command failed: ${cmd}`, err);
           }
         }
       }
-      await sendNotification({ repo: this, body, log: logOutput, hasError, logInstance: log });
-      if (log) log.info(`[Repo] Update complete for repo: ${this.pwd} Error: ${hasError}`);
+      await sendNotification({ repo: this, body, log: logOutput, hasError, logInstance });
+      if (logInstance) logInstance.info(`[Repo] Update complete for repo: ${this.pwd} Error: ${hasError}`);
       return !hasError;
     }
   };
@@ -171,7 +172,7 @@ async function sendNotification({ repo, body, log, hasError, logInstance }) {
  * @param {string} params.name - The repository name.
  * @returns {Promise<Object|null>} The repository handler or null if not found/invalid.
  */
-export async function get({ name }) {
+export async function get({ name, log = logger }) {
   const __dirname = path.dirname(new URL(import.meta.url).pathname);
   const configFile = path.resolve(__dirname, '../repos', `${name}.json`);
   if (!fs.existsSync(configFile)) {
@@ -186,5 +187,5 @@ export async function get({ name }) {
   if (!ConfigValidator.validate({ config })) {
     return null;
   }
-  return createRepo({ config });
+  return createRepo({ config, log });
 }

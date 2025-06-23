@@ -1,11 +1,12 @@
-import { fs, path } from '@purinton/common';
+import { fs, path, log as logger } from '@purinton/common';
 import inquirer from 'inquirer';
 
 /**
  * Interactive setup wizard for repository configuration.
  */
-export async function runWizard() {
+export async function runWizard({ log = logger } = {}) {
     try {
+        log.info('Starting interactive setup wizard');
         const { repoName } = await inquirer.prompt([
             {
                 type: 'input',
@@ -78,9 +79,9 @@ export async function runWizard() {
         const jsonConfig = JSON.stringify(config, null, 2);
         const filePath = await saveConfigurationFile(owner, repo, jsonConfig);
         printRepositoryInfo(filePath);
-    } catch (error) {
-        console.error('An error occurred:', error.message);
-        process.exit(1);
+        log.info('Repository configuration complete');
+    } catch (err) {
+        log.error('Wizard error:', err);
     }
 }
 

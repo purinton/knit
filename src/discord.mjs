@@ -1,5 +1,6 @@
 // This module is now deprecated. Use @purinton/discord-webhook directly via notifier.mjs
 
+import { log as logger } from '@purinton/common';
 import fetch from 'node-fetch';
 
 /**
@@ -9,8 +10,9 @@ import fetch from 'node-fetch';
  * @param {Array} params.embeds - The embed objects.
  * @param {string} [params.username] - The username to display.
  * @param {string} [params.avatar_url] - The avatar URL to display.
+ * @param {Object} [params.log] - Logger instance to use.
  */
-export async function send({ url, embeds, username, avatar_url }) {
+export async function send({ url, embeds, username, avatar_url, log = logger }) {
   const data = { embeds };
   if (username) data.username = username;
   if (avatar_url) data.avatar_url = avatar_url;
@@ -26,11 +28,13 @@ export async function send({ url, embeds, username, avatar_url }) {
     });
     if (!res.ok) {
       const errorText = await res.text();
-      console.error(
+      log.error(
         `Discord message send failed: ${res.status} ${res.statusText} - ${errorText}`
       );
+    } else {
+      log.info('Discord message sent successfully');
     }
   } catch (err) {
-    console.error('Error sending Discord message: ' + err.message);
+    log.error('Error sending Discord message: ' + err.message);
   }
 }

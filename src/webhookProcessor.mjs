@@ -1,3 +1,4 @@
+import { log as logger } from '@purinton/common';
 import * as SignatureValidator from './signatureValidator.mjs';
 import * as Publisher from './publisher.mjs';
 
@@ -8,7 +9,7 @@ import * as Publisher from './publisher.mjs';
  * @param {Object} [params.log] - Logger instance to use.
  * @returns {Object} Webhook processor with a process method.
  */
-export function createWebhookProcessor({ publisher = Publisher, log } = {}) {
+export function createWebhookProcessor({ publisher = Publisher, log = logger } = {}) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET || '';
   return {
     /**
@@ -21,12 +22,12 @@ export function createWebhookProcessor({ publisher = Publisher, log } = {}) {
         const rawData = req.rawBody;
         const data = req.body;
         validateSignature({ body: rawData, signature: req.headers['x-hub-signature-256'], secret, log });
-        if (log) log.info('[WebhookProcessor] Signature validated');
+        log.info('[WebhookProcessor] Signature validated');
         publisher.publish({ raw: rawData, parsed: data, log });
-        if (log) log.info('[WebhookProcessor] Published data to Publisher');
+        log.info('[WebhookProcessor] Published data to Publisher');
         res.sendStatus(200);
       } catch (err) {
-        if (log) log.error('[WebhookProcessor] Error:', err.message || err);
+        log.error('[WebhookProcessor] Error:', err.message || err);
         res.status(400).send('Webhook processing failed.');
       }
     }
@@ -42,13 +43,13 @@ export function createWebhookProcessor({ publisher = Publisher, log } = {}) {
  * @param {Object} [params.log] - Logger instance to use.
  * @throws {Error} If the signature is missing or invalid.
  */
-function validateSignature({ body, signature, secret, log }) {
+function validateSignature({ body, signature, secret, log = logger }) {
   if (!secret || !signature) {
-    if (log) log.error('Forbidden: Missing secret or signature.');
+    log.error('Forbidden: Missing secret or signature.');
     throw new Error('Forbidden: Missing secret or signature.');
   }
   if (!SignatureValidator.validate({ data: body, secret, signature })) {
-    if (log) log.error('Forbidden: Invalid signature.');
+    log.error('Forbidden: Invalid signature.');
     throw new Error('Forbidden: Invalid signature.');
   }
 }

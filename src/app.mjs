@@ -1,8 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import { createWebhookProcessor } from './webhookProcessor.mjs';
-import path from 'path';
-import log from '@purinton/log';
+import { log as logger, path } from '@purinton/common';
 
 
 function configureMiddleware(app, assetsPath) {
@@ -24,12 +23,12 @@ function configureRoutes(app, processor, log) {
 export async function createApp({
     webhookProcessorFactory = createWebhookProcessor,
     publisher = undefined,
-    assetsPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../assets'),
-    log: injectedLog = log
+    assetsPath = path(import.meta, '..', 'assets'),
+    log = logger,
 } = {}) {
     const app = express();
     configureMiddleware(app, assetsPath);
-    const processor = webhookProcessorFactory({ publisher, log: injectedLog });
+    const processor = webhookProcessorFactory({ publisher, log });
     configureRoutes(app, processor, injectedLog);
     return app;
 }
@@ -37,10 +36,10 @@ export async function createApp({
 export function startApp({
     appInstance,
     PORT = process.env.PORT || 3456,
-    log: injectedLog = log
+    log = logger,
 }) {
     if (!appInstance) throw new Error('App not created. Call createApp() first.');
     appInstance.listen(PORT, () => {
-        injectedLog.info(`Server is listening on port ${PORT}`);
+        log.info(`Server is listening on port ${PORT}`);
     });
 }

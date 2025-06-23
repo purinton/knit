@@ -1,17 +1,21 @@
 import { exec } from 'child_process';
+import { log as logger } from '@purinton/common';
 
 /**
  * Stages a file for commit using git add.
  * @param {Object} params
  * @param {string} params.filePath - The file path to add.
+ * @param {Object} [params.log] - Logger instance to use.
  * @returns {Promise<string>} The stdout from git add.
  */
-export function add({ filePath }) {
+export function add({ filePath, log = logger }) {
   return new Promise((resolve, reject) => {
     exec(`git add "${filePath}"`, (error, stdout, stderr) => {
       if (error) {
+        log.error(`git add error: ${stderr}`);
         reject(new Error(`git add error: ${stderr}`));
       } else {
+        log.info(`git add success: ${filePath}`);
         resolve(stdout);
       }
     });
@@ -22,14 +26,17 @@ export function add({ filePath }) {
  * Commits staged changes with a message.
  * @param {Object} params
  * @param {string} params.message - The commit message.
+ * @param {Object} [params.log] - Logger instance to use.
  * @returns {Promise<string>} The stdout from git commit.
  */
-export function commit({ message }) {
+export function commit({ message, log = logger }) {
   return new Promise((resolve, reject) => {
     exec(`git commit --quiet -m "${message.replace(/"/g, '\\"')}"`, (error, stdout, stderr) => {
       if (error) {
+        log.error(`git commit error: ${stderr}`);
         reject(new Error(`git commit error: ${stderr}`));
       } else {
+        log.info('git commit success');
         resolve(stdout);
       }
     });
