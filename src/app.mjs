@@ -1,6 +1,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import WebhookProcessor from './webhookProcessor.mjs';
+import { createWebhookProcessor } from './webhookProcessor.mjs';
+import path from 'path';
+import log from '@purinton/log';
 
 
 function configureMiddleware(app, assetsPath) {
@@ -12,30 +14,33 @@ function configureMiddleware(app, assetsPath) {
     }));
 }
 
-function configureRoutes(app, processor) {
+function configureRoutes(app, processor, log) {
     app.post('/', (req, res) => {
-        console.log('[App] Incoming POST / request');
+        log.info('[App] Incoming POST / request');
         processor.process(req, res);
     });
 }
 
 export async function createApp({
-    webhookProcessorFn = WebhookProcessor,
-    assetsPath = path(import.meta, '..', 'assets')
+    webhookProcessorFactory = createWebhookProcessor,
+    publisher = undefined,
+    assetsPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../assets'),
+    log: injectedLog = log
 } = {}) {
     const app = express();
     configureMiddleware(app, assetsPath);
-    configureRoutes(app, webhookProcessorfn);
-    appInstance = app;
+    const processor = webhookProcessorFactory({ publisher, log: injectedLog });
+    configureRoutes(app, processor, injectedLog);
     return app;
 }
 
 export function startApp({
     appInstance,
-    PORT = process.env.PORT || 3456
+    PORT = process.env.PORT || 3456,
+    log: injectedLog = log
 }) {
     if (!appInstance) throw new Error('App not created. Call createApp() first.');
     appInstance.listen(PORT, () => {
-        console.log(`Server is listening on port ${PORT}`);
+        injectedLog.info(`Server is listening on port ${PORT}`);
     });
 }

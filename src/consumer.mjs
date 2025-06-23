@@ -1,23 +1,30 @@
 import Repo from './repo.mjs';
 import GitHub from './github.mjs';
 
-export async function consume(message) {
+/**
+ * Consumes a webhook message and updates the corresponding repository.
+ * @param {Object} params
+ * @param {Object} params.message - The message object ({ raw, parsed }).
+ * @param {Object} params.log - The log object for logging messages.
+ * @returns {Promise<boolean>} True if successful, false otherwise.
+ */
+export async function consume({ message, log }) {
   // message: { raw, parsed }
   const post = message.parsed;
-  if (!GitHub.validate(post)) {
-    console.error('[Consumer] GitHub validation failed');
+  if (!GitHub.validate({ post })) {
+    if (log) log.error('[Consumer] GitHub validation failed');
     return false;
   }
-  const repo = await Repo.get(post.repository.full_name);
+  const repo = await Repo.get({ name: post.repository.full_name });
   if (!repo) {
-    console.error('[Consumer] Repo not found:', post.repository.full_name);
+    if (log) log.error('[Consumer] Repo not found:', post.repository.full_name);
     return false;
   }
-  const updated = await repo.update(post);
+  const updated = await repo.update({ body: post, log });
   if (!updated) {
-    console.error('[Consumer] Repo update failed');
+    if (log) log.error('[Consumer] Repo update failed');
     return false;
   }
-  console.log('[Consumer] Repo updated successfully');
+  if (log) log.info('[Consumer] Repo updated successfully');
   return true;
 }

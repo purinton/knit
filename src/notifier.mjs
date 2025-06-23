@@ -1,23 +1,42 @@
-import * as Discord from './discord.mjs';
+import { sendMessage } from '@purinton/discord-webhook';
 
-export async function send(notifyUrl, post, log, hasError) {
+/**
+ * Sends a notification to a Discord webhook.
+ * @param {Object} params
+ * @param {string} params.notifyUrl - The Discord webhook URL.
+ * @param {Object} params.post - The webhook payload.
+ * @param {string} params.log - The log output.
+ * @param {boolean} params.hasError - Whether an error occurred.
+ */
+export async function send({ notifyUrl, post, log, hasError, log: logInstance }) {
   if (!notifyUrl) return;
-  const embed = await createEmbed(post, log, hasError);
+  const embed = await createEmbed({ post, knitResults: log, hasError });
   if (hasError) {
     embed.color = 0xFF0000;
     embed.title = `\u274c Error: ${embed.title}`;
   } else {
     embed.title = `\u2705 ${embed.title}`;
   }
-  await Discord.send(
-    notifyUrl,
-    [embed],
-    'Knit',
-    'https://knit.purinton.us/assets/knit.png'
-  );
+  if (logInstance) logInstance.info('[Notifier] Sending message to Discord webhook');
+  await sendMessage({
+    url: notifyUrl,
+    body: {
+      embeds: [embed],
+      username: 'Knit',
+      avatar_url: 'https://knit.purinton.us/assets/knit.png'
+    }
+  });
 }
 
-export async function createEmbed(post, knitResults, hasError) {
+/**
+ * Creates a Discord embed object for a webhook event.
+ * @param {Object} params
+ * @param {Object} params.post - The webhook payload.
+ * @param {string} [params.knitResults] - The log output.
+ * @param {boolean} [params.hasError] - Whether an error occurred.
+ * @returns {Object} The embed object.
+ */
+export async function createEmbed({ post, knitResults, hasError }) {
   const embed = {};
   if (post.ref && post.ref.startsWith('refs/tags/')) {
     const repoName = post.repository?.full_name || 'Unknown Repository';
@@ -96,7 +115,7 @@ export async function createEmbed(post, knitResults, hasError) {
       description += `**${shortId}**: [${message}](${url})\n`;
     }
     if (hasError && knitResults) {
-      description += `\n\u0060\u0060\u0060\n${knitResults}\n\u0060\u0060\u0060`;
+      description += '```text\n' + knitResults + '\n```';
     }
     if (description.length > 2000) {
       description = description.substr(0, 1997) + '...';
@@ -147,7 +166,7 @@ export async function createEmbed(post, knitResults, hasError) {
     embed.description = 'See details on GitHub for more information.';
     embed.thumbnail = { url: 'https://knit.purinton.us/assets/github.png' };
     if (hasError && knitResults) {
-      embed.description += `\n\u0060\u0060\u0060\n${knitResults}\n\u0060\u0060\u0060`;
+      embed.description += '```text\n' + knitResults + '\n```';
     }
     embed.footer = { text: 'GitHub Event' };
   }

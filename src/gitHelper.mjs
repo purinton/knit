@@ -1,6 +1,12 @@
 import { exec } from 'child_process';
 
-export function add(filePath) {
+/**
+ * Stages a file for commit using git add.
+ * @param {Object} params
+ * @param {string} params.filePath - The file path to add.
+ * @returns {Promise<string>} The stdout from git add.
+ */
+export function add({ filePath }) {
   return new Promise((resolve, reject) => {
     exec(`git add "${filePath}"`, (error, stdout, stderr) => {
       if (error) {
@@ -12,7 +18,13 @@ export function add(filePath) {
   });
 }
 
-export function commit(message) {
+/**
+ * Commits staged changes with a message.
+ * @param {Object} params
+ * @param {string} params.message - The commit message.
+ * @returns {Promise<string>} The stdout from git commit.
+ */
+export function commit({ message }) {
   return new Promise((resolve, reject) => {
     exec(`git commit --quiet -m "${message.replace(/"/g, '\\"')}"`, (error, stdout, stderr) => {
       if (error) {
@@ -24,6 +36,10 @@ export function commit(message) {
   });
 }
 
+/**
+ * Pushes committed changes to the remote repository.
+ * @returns {Promise<string>} The stdout from git push.
+ */
 export function push() {
   return new Promise((resolve, reject) => {
     exec('git push --quiet', (error, stdout, stderr) => {
