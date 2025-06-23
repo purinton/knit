@@ -25,7 +25,7 @@ export async function send({ notifyUrl, post, logOutput, hasError, log = logger,
     body: {
       embeds: [embed],
       username: 'Knit',
-      avatar_url: 'https://knit.purinton.us/assets/knit.png'
+      avatar_url: 'https://knit.purinton.us/assets/github.png'
     }
   });
 }
@@ -77,7 +77,7 @@ export async function createEmbed({ post, logOutput, hasError }) {
     embed.url = repoUrl;
     embed.color = 0x00FF00;
     embed.timestamp = post.head_commit?.timestamp || new Date().toISOString();
-    embed.thumbnail = { url: 'https://knit.purinton.us/assets/github.png' };
+    embed.thumbnail = { url: 'https://knit.purinton.us/assets/knit.png' };
     let addedFiles = new Set();
     let removedFiles = new Set();
     let modifiedFiles = new Set();
@@ -167,7 +167,7 @@ export async function createEmbed({ post, logOutput, hasError }) {
     embed.title = `${repoName} - ${action}`;
     embed.color = 0x3498db;
     embed.description = 'See details on GitHub for more information.';
-    embed.thumbnail = { url: 'https://knit.purinton.us/assets/github.png' };
+    embed.thumbnail = { url: 'https://knit.purinton.us/assets/knit.png' };
     if (hasError && logOutput) {
       // Truncate before appending log output
       if (embed.description.length > 1800) {
