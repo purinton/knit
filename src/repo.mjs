@@ -170,8 +170,7 @@ async function sendNotification({ repo, body, logOutput, hasError, log = logger 
  * @returns {Promise<Object|null>} The repository handler or null if not found/invalid.
  */
 export async function get({ name, log = logger }) {
-  const __dirname = path.dirname(new URL(import.meta.url).pathname);
-  const configFile = path.resolve(__dirname, '../repos', `${name}.json`);
+  const configFile = path(import.meta, '..', 'repos', `${name}.json`);
   if (!fs.existsSync(configFile)) {
     return null;
   }
