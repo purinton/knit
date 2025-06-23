@@ -1,4 +1,4 @@
-import * as Discord from './Discord.mjs';
+import * as Discord from './discord.mjs';
 
 export async function send(notifyUrl, post, log, hasError) {
   if (!notifyUrl) return;

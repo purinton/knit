@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
-import * as ConfigValidator from './ConfigValidator.mjs';
-import * as Notifier from './Notifier.mjs';
+import * as ConfigValidator from './configValidator.mjs';
+import * as Notifier from './notifier.mjs';
 
 function createRepo(config) {
   return {

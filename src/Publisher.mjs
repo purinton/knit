@@ -1,4 +1,4 @@
-import * as Consumer from './Consumer.mjs';
+import * as Consumer from './consumer.mjs';
 
 let tasks = [];
 let isProcessing = false;

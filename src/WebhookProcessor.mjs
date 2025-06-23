@@ -1,5 +1,5 @@
-import * as SignatureValidator from './SignatureValidator.mjs';
-import * as Publisher from './Publisher.mjs';
+import * as SignatureValidator from './signatureValidator.mjs';
+import * as Publisher from './publisher.mjs';
 
 let queue = 'inbox';
 let secret = process.env.GITHUB_WEBHOOK_SECRET || '';

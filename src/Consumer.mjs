@@ -1,5 +1,5 @@
-import Repo from './Repo.mjs';
-import GitHub from './GitHub.mjs';
+import Repo from './repo.mjs';
+import GitHub from './github.mjs';
 
 export async function consume(message) {
   // message: { raw, parsed }
