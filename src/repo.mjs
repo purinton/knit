@@ -1,5 +1,4 @@
-import fs from 'fs';
-import { path, log as logger } from '@purinton/common';
+import { fs, path, log as logger } from '@purinton/common';
 import { exec } from 'child_process';
 import * as ConfigValidator from './configValidator.mjs';
 import * as Notifier from './notifier.mjs';
@@ -25,80 +24,79 @@ function createRepo({ config, log = logger }) {
      * @param {Object} params.log - The log object for logging messages.
      * @returns {Promise<boolean>} True if update succeeded, false otherwise.
      */
-    async update({ body, log: injectedLog }) {
-      const logInstance = injectedLog || log;
-      if (logInstance) logInstance.info(`[Repo] Starting update for repo: ${this.pwd}`);
+    async update({ body, log = logger }) {
+      log.info(`[Repo] Starting update for repo: ${this.pwd}`);
       if (!validatebody({ body })) {
-        if (logInstance) logInstance.error('[Repo] body validation failed');
+        log.error('[Repo] body validation failed');
         return false;
       }
       if (body.ref && body.ref.startsWith('refs/tags/')) {
-        if (logInstance) logInstance.info('[Repo] Tag push detected, skipping commands and only sending notification');
-        await sendNotification({ repo: this, body, log: '', hasError: false, logInstance });
+        log.info('[Repo] Tag push detected, skipping commands and only sending notification');
+        await sendNotification({ repo: this, body, log: '', hasError: false, log: log });
         return true;
       }
       let logOutput = '';
       let hasError = false;
       try {
         process.chdir(this.pwd);
-        if (logInstance) logInstance.info(`[Repo] Changed directory to ${this.pwd}`);
+        log.info(`[Repo] Changed directory to ${this.pwd}`);
       } catch (err) {
         logOutput += `Error: Unable to change directory to: ${this.pwd}\n`;
         hasError = true;
-        if (logInstance) logInstance.error('[Repo] Error changing directory:', err);
+        log.error('[Repo] Error changing directory:', err);
       }
       if (!hasError) {
         for (const cmd of this.preCmds) {
           if (hasError) break;
-          if (logInstance) logInstance.info(`[Repo] Running pre command: ${cmd}`);
+          log.info(`[Repo] Running pre command: ${cmd}`);
           try {
             const result = await execCommand({ cmd });
             logOutput += formatCommandOutput({ cmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
           } catch (err) {
             logOutput += formatCommandOutput({ cmd, stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
             hasError = true;
-            if (logInstance) logInstance.error(`[Repo] Pre command failed: ${cmd}`, err);
+            log.error(`[Repo] Pre command failed: ${cmd}`, err);
           }
         }
       }
       if (!hasError) {
         try {
-          if (logInstance) logInstance.info('[Repo] Running git pull');
+          log.info('[Repo] Running git pull');
           const result = await execCommand({ cmd: 'git pull -q' });
           logOutput += formatCommandOutput({ cmd: 'git pull -q', stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
         } catch (err) {
           logOutput += formatCommandOutput({ cmd: 'git pull -q', stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
           hasError = true;
-          if (logInstance) logInstance.error('[Repo] git pull failed:', err);
+          log.error('[Repo] git pull failed:', err);
         }
       }
       if (!hasError) {
         try {
           const chownCmd = `chown -R ${this.user}:${this.group} ${this.pwd}`;
-          if (logInstance) logInstance.info(`[Repo] Running chown: ${chownCmd}`);
+          log.info(`[Repo] Running chown: ${chownCmd}`);
           const result = await execCommand({ cmd: chownCmd });
           logOutput += formatCommandOutput({ cmd: chownCmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
         } catch (err) {
           hasError = true;
-          if (logInstance) logInstance.error('[Repo] chown failed:', err);
+          log.error('[Repo] chown failed:', err);
         }
       }
       if (!hasError) {
         for (const cmd of this.postCmds) {
           if (hasError) break;
-          if (logInstance) logInstance.info(`[Repo] Running post command: ${cmd}`);
+          log.info(`[Repo] Running post command: ${cmd}`);
           try {
             const result = await execCommand({ cmd });
             logOutput += formatCommandOutput({ cmd, stdout: result.stdout, stderr: result.stderr, exitCode: 0 });
           } catch (err) {
             logOutput += formatCommandOutput({ cmd, stdout: err.stdout, stderr: err.stderr, exitCode: 1 });
             hasError = true;
-            if (logInstance) logInstance.error(`[Repo] Post command failed: ${cmd}`, err);
+            log.error(`[Repo] Post command failed: ${cmd}`, err);
           }
         }
       }
-      await sendNotification({ repo: this, body, log: logOutput, hasError, logInstance });
-      if (logInstance) logInstance.info(`[Repo] Update complete for repo: ${this.pwd} Error: ${hasError}`);
+      await sendNotification({ repo: this, body, logOutput, hasError, log });
+      log.info(`[Repo] Update complete for repo: ${this.pwd} Error: ${hasError}`);
       return !hasError;
     }
   };
@@ -159,11 +157,10 @@ function execCommand({ cmd }) {
  * @param {Object} params.body - The webhook payload.
  * @param {string} params.log - The log output.
  * @param {boolean} params.hasError - Whether an error occurred.
- * @param {Object} params.logInstance - The log instance for logging.
  */
-async function sendNotification({ repo, body, log, hasError, logInstance }) {
+async function sendNotification({ repo, body, logOutput, hasError, log = logger }) {
   if (!repo.notify) return;
-  await Notifier.send({ notifyUrl: repo.notify, post: body, log, hasError, log: logInstance });
+  await Notifier.send({ notifyUrl: repo.notify, post: body, logOutput, hasError, log });
 }
 
 /**
