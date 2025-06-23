@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import log from '@purinton/log';
 import { registerHandlers, registerSignals } from '@purinton/common';
 import { createApp, startApp } from './src/app.mjs';
