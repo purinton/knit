@@ -29,7 +29,7 @@ export async function createApp({
     const app = express();
     configureMiddleware(app, assetsPath);
     const processor = webhookProcessorFactory({ publisher, log });
-    configureRoutes(app, processor, injectedLog);
+    configureRoutes(app, processor, log);
     return app;
 }
 
