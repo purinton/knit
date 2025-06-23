@@ -115,11 +115,12 @@ export async function createEmbed({ post, logOutput, hasError }) {
       const shortId = commit.id?.substring(0, 7) || '';
       description += `**${shortId}**: [${message}](${url})\n`;
     }
+    // Truncate before appending log output
+    if (description.length > 1800) {
+      description = description.slice(0, 1797) + '...';
+    }
     if (hasError && logOutput) {
       description += '```text\n' + logOutput + '\n```';
-    }
-    if (description.length > 2000) {
-      description = description.slice(0, 1997) + '...';
     }
     embed.description = description.trim();
     let authorName = pusher;
@@ -167,6 +168,10 @@ export async function createEmbed({ post, logOutput, hasError }) {
     embed.description = 'See details on GitHub for more information.';
     embed.thumbnail = { url: 'https://knit.purinton.us/assets/github.png' };
     if (hasError && logOutput) {
+      // Truncate before appending log output
+      if (embed.description.length > 1800) {
+        embed.description = embed.description.slice(0, 1797) + '...';
+      }
       embed.description += '```text\n' + logOutput + '\n```';
     }
     embed.footer = { text: 'GitHub Event' };
