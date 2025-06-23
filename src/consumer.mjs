@@ -1,5 +1,5 @@
-import Repo from './repo.mjs';
-import GitHub from './github.mjs';
+import * as Repo from './repo.mjs';
+import * as GitHub from './gitHub.mjs';
 
 /**
  * Consumes a webhook message and updates the corresponding repository.
