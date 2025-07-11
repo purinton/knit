@@ -1,7 +1,7 @@
 {
     "name": "@purinton/knit",
     "type": "module",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "GitHub webhook handler and deployment automation tool. Listens for GitHub webhook events, validates signatures, updates repositories, runs deployment commands, and sends notifications.",
     "main": "knit.mjs",
     "scripts": {
@@ -30,7 +30,7 @@
     },
     "homepage": "https://github.com/purinton/knit#readme",
     "devDependencies": {
-        "jest": "^30.0.2"
+        "jest": "^30.0.4"
     },
     "jest": {
         "testEnvironment": "node",
@@ -41,10 +41,10 @@
         ]
     },
     "dependencies": {
-        "@purinton/common": "^1.0.16",
-        "@purinton/discord-webhook": "^1.0.3",
-        "dotenv": "^16.5.0",
+        "@purinton/common": "^1.0.17",
+        "@purinton/discord-webhook": "^1.0.4",
+        "dotenv": "^17.2.0",
         "express": "^5.1.0",
-        "inquirer": "^12.6.3"
+        "inquirer": "^12.7.0"
     }
 }
